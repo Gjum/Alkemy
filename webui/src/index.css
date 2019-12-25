@@ -48,21 +48,52 @@ textarea.Config-textarea {
   margin-right: 1em;
 }
 
+.container-info-col h4 {
+  margin-top: .5em;
+  margin-bottom: .3em;
+}
+
 .container-info dt {
-  float: left;
+  display: inline;
   clear: left;
 }
 
-.container-info dt, .container-info-hint {
-  opacity: .5;
-}
-
 .container-info dd {
-  float: left;
+  display: inline;
   margin-inline-start: unset;
 }
 
 .container-info dt:after {
   content: ":";
   margin-right: .5em;
+}
+
+.container-info dd:after {
+  content: "\A";
+  white-space: pre;
+}
+
+.container-info dt, .container-info-hint {
+  opacity: .5;
+}
+
+.form-row {
+  display: flex;
+}
+
+.form-row>.form-description {
+  flex: 1 1 auto;
+}
+
+.form-row>input, .form-row>.unit {
+  flex: 0 0 auto;
+}
+
+.form-description:after {
+  content: ":";
+  margin-right: .5em;
+}
+
+.form-row>.unit {
+  margin-left: .2em;
 }
