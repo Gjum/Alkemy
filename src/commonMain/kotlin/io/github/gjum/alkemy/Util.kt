@@ -32,7 +32,7 @@ fun ReactionResult.print(): List<String> {
 		lines += "Spilling ... (${overflow.liquid!!.volume.round(6)}ml)"
 	}
 
-	if (lines.isEmpty()) lines += "Nothing happened ..."
+	if (lines.isEmpty()) lines += "Nothing happens ..."
 
 	return lines
 }

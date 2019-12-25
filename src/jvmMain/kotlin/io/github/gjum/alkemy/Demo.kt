@@ -1,6 +1,7 @@
 package io.github.gjum.alkemy
 
 import java.io.File
+import kotlin.math.min
 
 fun main() {
 	val configText = File("test_config_1.txt").readText()
@@ -18,21 +19,12 @@ fun main() {
 			Atom(elements["C"]!!)
 		), bondsConfig
 	)
-	println("Water boils at ${moleculeWater.boilingTemperature.r2}K")
-	for (temperature in listOf(
-		0.0,
-		ROOM_TEMPERATURE,
-		moleculeWater.boilingTemperature,
-		moleculeWater.boilingTemperature + 1
-	)) {
-		val volume = moleculeWater.volume(temperature)
-		val phase = moleculeWater.phase(temperature)
-		println("Water volume at ${temperature}K is ${volume.r6}ml ($phase)")
-	}
+	printMoleculeInfo("Water", moleculeWater)
 	println()
 
 	val moleculeDD = Molecule(listOf(Atom(elements["D"]!!), Atom(elements["D"]!!)), bondsConfig)
-	println("DD boils at ${moleculeDD.boilingTemperature.r2}K")
+	printMoleculeInfo("DD", moleculeDD)
+	println()
 
 	val liquid = Liquid(
 		mutableMapOf(
@@ -48,30 +40,43 @@ fun main() {
 	println("\nAdding ${liquid.volume.r6}ml (${liquid.mass.r6}g) liquid to flask ...")
 	val addResult = flask.addLiquid(liquid)
 	println(addResult.print().joinToString("\n"))
-	println("Flask is at ${flask.temperature.r2}K (${flask.thermalEnergy.r2}J in ${flask.combinedMass.r6}g)")
-	val volAfter0 = flask.liquid?.volume ?: 0.0
-	println("Flask contains ${volAfter0.r6}ml liquid")
-	val slagVol0 = flask.liquid?.slag?.volume ?: 0.0
-	println("Flask contains ${slagVol0.r6}ml slag (${(slagVol0 pctOf volAfter0).r4}% of liquid)")
+	printFlaskState(flask)
 
-	val temperatureTarget = 401.0
+	val temperatureTarget = 1.0 + min(moleculeWater.boilingTemperature, moleculeDD.boilingTemperature)
 	println("\nHeating flask to ${temperatureTarget.r2}K ...")
 	val heatResult = flask.heatTo(temperatureTarget)
 	println(heatResult.print().joinToString("\n"))
-	println("Flask is at ${flask.temperature.r2}K (${flask.thermalEnergy.r2}J in ${flask.combinedMass.r6}g)")
-	val volAfter1 = flask.liquid?.volume ?: 0.0
-	println("Flask contains ${volAfter1.r6}ml liquid (${(volAfter1 pctOf volAfter0).r4}% of before)")
-	val slagVol1 = flask.liquid?.slag?.volume ?: 0.0
-	println("Flask contains ${slagVol1.r6}ml slag (${(slagVol1 pctOf volAfter1).r4}% of liquid)")
+	printFlaskState(flask)
 }
 
-private val Volume.r2 get() = round(2).let { rounded -> if (this != rounded) "~$rounded" else "$rounded" }
-private val Volume.r4 get() = round(4).let { rounded -> if (this != rounded) "~$rounded" else "$rounded" }
-private val Volume.r6 get() = round(6).let { rounded -> if (this != rounded) "~$rounded" else "$rounded" }
+private fun printMoleculeInfo(moleculeName: String, molecule: Molecule) {
+	println("$moleculeName boils at ${molecule.boilingTemperature.r2}K")
+	for (temperature in listOf(
+		0.0,
+		ROOM_TEMPERATURE,
+		molecule.boilingTemperature - 1,
+		molecule.boilingTemperature + 1
+	).sorted()) {
+		val volume = molecule.volume(temperature)
+		val phase = molecule.phase(temperature)
+		println("$moleculeName at ${temperature}K: ${volume.r6}ml ($phase)")
+	}
+}
+
+private fun printFlaskState(flask: Container.Flask) {
+	println("Flask is at ${flask.temperature.r2}K (${flask.thermalEnergy.r2}J in ${flask.combinedMass.r6}g)")
+	val liquidVol = flask.liquid?.volume ?: 0.0
+	val slagVol = flask.liquid?.slag?.volume ?: 0.0
+	println("Flask contains ${liquidVol.r6}ml liquid with ${slagVol.r6}ml slag (${(slagVol pctOf liquidVol).r4}% of liquid)")
+}
+
+private val Double.r2 get() = round(2).let { rounded -> if (this != rounded) "~$rounded" else "$rounded" }
+private val Double.r4 get() = round(4).let { rounded -> if (this != rounded) "~$rounded" else "$rounded" }
+private val Double.r6 get() = round(6).let { rounded -> if (this != rounded) "~$rounded" else "$rounded" }
 
 private infix fun Double.pctOf(total: Double) = if (total.nearZero) Double.POSITIVE_INFINITY else 100 * this / total
 
-fun Mixture.atTemperature(targetTemperature: Temperature): Mixture {
+private fun Mixture.atTemperature(targetTemperature: Temperature): Mixture {
 	return Mixture(molecules, slag, mass * (targetTemperature / ROOM_TEMPERATURE))
 }
 
